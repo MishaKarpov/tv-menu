@@ -1,0 +1,385 @@
+<html>
+
+<head>
+<meta charset="utf-8"/>
+<title>
+smartMenu tv
+</title>
+
+<style>
+
+
+
+body
+{
+margin: 0 4%;
+}
+
+a:hover {
+text-decoration: none;
+}
+
+a {
+  color:blue;
+}
+
+
+
+
+div.line  {
+  box-sizing: border-box;
+width: 100%;
+font-size: 50px;
+padding: 10pt;
+color:blue;
+padding-left: 10%;
+border-bottom: 1px dashed black;
+
+}
+/*
+div.line:nth-of-type(2n+1)
+{
+background-color: #ebebeb;
+
+}
+
+div.line:nth-of-type(2n)
+{
+background-color:#f6fff7;
+}
+*/
+
+
+
+.line-odd
+{
+background-color: #ebebeb;
+}
+
+.line-oven
+{
+background-color:#f6fff7;
+}
+
+
+#top {
+background-color: #d5ffa8;
+text-align: center;
+padding: 0;
+font-size: 0;
+
+}
+
+
+div.line:hover
+{
+background-color:#0400a6;
+color: #fff;
+padding-left:15%;
+text-decoration: none;
+}
+
+
+.box
+{
+width: 100%;
+display: inline-block;
+font-size: 50pt;
+overflow: hidden;
+box-sizing: border-box;
+padding: 15pt;
+background-color:#a5db6b;
+text-align: center;
+clear: none;
+}
+
+#top>div
+{
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+
+display: inline-block;
+width: 33%;
+margin: 0;
+padding: 10pt;
+}
+
+
+.box:hover
+{
+background-color:#c10000;
+color: #fff;
+}
+
+
+
+#add, #load
+{
+font-size: 20px;
+text-align:center;
+padding: 5pt 0pt;
+background-color: #fdf064;
+font-weight: bold;
+}
+
+#load{
+padding: 15pt;
+}
+
+
+ #add:hover, #load:hover
+{
+background-color:#c10000;
+color: #fff;
+}
+
+
+div.scroll
+{
+position: fixed; height: 100%; width: 4%;
+z-index: 9999;
+
+}
+
+div.scroll:hover
+{
+background-color:#0400a6;
+width: 8%;
+
+}
+
+#rightScroll
+{
+left: 96%;
+}
+
+#rightScroll:hover
+{
+left: 92%
+}
+
+
+
+.spinner {
+  width: 60px;
+  height: 60px;
+
+  position: relative;
+  margin: 10px auto;
+}
+
+.double-bounce1, .double-bounce2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #333;
+  opacity: 0.6;
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
+  animation: sk-bounce 2.0s infinite ease-in-out;
+}
+
+.double-bounce2 {
+  -webkit-animation-delay: -1.0s;
+  animation-delay: -1.0s;
+}
+
+@-webkit-keyframes sk-bounce {
+  0%, 100% { -webkit-transform: scale(0.0) }
+  50% { -webkit-transform: scale(1.0) }
+}
+
+@keyframes sk-bounce {
+  0%, 100% {
+    transform: scale(0.0);
+    -webkit-transform: scale(0.0);
+  } 50% {
+    transform: scale(1.0);
+    -webkit-transform: scale(1.0);
+  }
+}
+
+
+
+</style>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+
+
+</head>
+
+<body ng-app="tvApp" ng-controller="tvCtrl">
+
+<a href="#">
+<div class="scroll" style="margin-left:-4%;" ></div>
+</a>
+
+<a href="./index.html">
+<div class="scroll" id="rightScroll" ></div>
+</a>
+
+
+
+
+<div class="line" id="top">
+<div ng-repeat="x in topList">
+<a class="box" href="{{x.url}}">{{x.name}}</a>
+</div>
+</div>
+
+
+
+
+
+
+<a  href="https://docs.google.com/spreadsheets/d/1eRCT45dFEzXur1_ztYR7gaGwzGeYdM1N71qmrOjPEWk/edit?usp=sharing" style="text-decoration: none;" >
+<div class="line" id="add" >
+E D I T
+</div></a>
+
+
+<div ng-repeat="x in list">
+<a href="{{x.url}}"><div class="line {{($index+1)%2?'line-odd':'line-even'}}" ><b>{{$index+1}}. </b>{{x.name}}</div></a>
+
+</div>
+
+<div class="line" id="load" ng-click="loadMore();" ng-show="!isLoading.status">
+Еще
+</div>
+
+<div class="spinner" ng-show="isLoading.status">
+  <div class="double-bounce1"></div>
+  <div class="double-bounce2"></div>
+
+
+</div>
+
+
+</body>
+
+
+<script type="text/javascript">
+
+
+var app = angular.module("tvApp", []);
+
+
+app.factory('$list', function ($http) {
+
+
+  var factory={};
+  var list=[];
+  var currentPage=0;
+  var itemsPerPage=20;
+  var isLoading={status:true};
+  //list.name=[];
+  //list.url=[];
+
+var topList=[];
+
+  factory.getTopList = function()
+  {
+
+if(topList.length>0) return topList;
+
+    $http.get("https://spreadsheets.google.com/feeds/list/1eRCT45dFEzXur1_ztYR7gaGwzGeYdM1N71qmrOjPEWk/2/public/values?alt=json")
+        .then(function (response) {
+
+            response.data.feed.entry.forEach(function(entry) {
+
+              var el={};
+              el.name=entry.gsx$name.$t;
+              el.url=entry.gsx$url.$t;
+              topList.push(el);
+            });
+
+
+        });
+
+        return topList;
+
+  }
+
+
+factory.getNewList = function()
+{
+var min=1+currentPage*itemsPerPage;
+var max=min+itemsPerPage-1;
+isLoading.status=true;
+  $http.get("https://spreadsheets.google.com/feeds/cells/1eRCT45dFEzXur1_ztYR7gaGwzGeYdM1N71qmrOjPEWk/od6/public/values?alt=json&min-col=2&max-col=3&min-row="+min+"&max-row="+max)
+      .then(function (response) {
+isLoading.status=false;
+
+
+for(var i=0;i<response.data.feed.entry.length;i+=2)
+{
+
+list.push({name: response.data.feed.entry[i].gs$cell.$t, url: response.data.feed.entry[i+1].gs$cell.$t });
+
+}
+
+
+/*
+      response.data.feed.entry.forEach(function(entry) {
+/ *
+        switch (entry.gs$cell.col) {
+          case 2:
+        list.name.push(entry.gs$cell.$t);
+            break;
+            case 3:
+          list.url.push(entry.gs$cell.$t);
+              break;
+
+        }
+      * /
+
+              });
+
+              */
+
+          });
+currentPage++;
+return list;
+}
+
+
+factory.start = function()
+{
+  if(currentPage>0) return list;
+  return this.getNewList();
+}
+
+
+factory.loadingStatus = function()
+{
+  return isLoading;
+}
+
+        return factory;
+    });
+
+
+
+
+    app.controller("tvCtrl", function($scope, $list) {
+
+    $scope.list=$list.start();
+    $scope.topList=$list.getTopList();
+    $scope.isLoading=$list.loadingStatus();
+
+
+    $scope.loadMore= function(){
+    $scope.list=$list.getNewList();
+    }
+
+    });
+
+
+</script>
+
+</html>
